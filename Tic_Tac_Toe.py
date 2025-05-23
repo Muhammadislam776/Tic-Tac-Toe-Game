@@ -1,183 +1,185 @@
 import tkinter as tk
-from tkinter import font
 from PIL import Image, ImageTk
+import os
+import random
 
-ASSETS = "assets/"
+ASSETS = "assets/"  # Folder with images
 
 class TicTacToeApp:
-    def __init__(self, root):  # <-- FIXED
+    def __init__(self, root):
         self.root = root
         self.root.title("Tic Tac Toe")
-        self.root.geometry("540x800")
+        self.root.geometry("540x872")
         self.root.resizable(False, False)
-        self.load_assets()
-        self.show_main_menu()
+        self.menu_screen()
 
-    def load_assets(self):
-        # Load background
-        self.bg_img = Image.open(ASSETS + "background.jpg").resize((540, 800))
-        self.bg_tk = ImageTk.PhotoImage(self.bg_img)
-        # Load X, O, button
-        self.x_img = ImageTk.PhotoImage(Image.open(ASSETS + "x.png").resize((100, 100)))
-        self.o_img = ImageTk.PhotoImage(Image.open(ASSETS + "o.png").resize((100, 100)))
-        self.button_img = ImageTk.PhotoImage(Image.open(ASSETS + "button.png").resize((300, 60)))
-        # Try to load custom font, fallback to Arial
-        try:
-            self.custom_font = font.Font(family="Luckiest Guy", size=28)
-        except:
-            self.custom_font = font.Font(family="Arial", size=28, weight="bold")
-
-    def clear(self):
+    def menu_screen(self):
         for widget in self.root.winfo_children():
             widget.destroy()
 
-    def show_main_menu(self):
-        self.clear()
-        canvas = tk.Canvas(self.root, width=540, height=800, highlightthickness=0)
-        canvas.pack(fill="both", expand=True)
-        canvas.create_image(0, 0, anchor="nw", image=self.bg_tk)
-        # Title
-        canvas.create_text(270, 120, text="TIC TAC TOE", font=(self.custom_font, 50), fill="#E5B97A")
-        # 1 Player Button
-        btn1 = tk.Button(self.root, image=self.button_img, text="1 Player", compound="center",
-                         font=(self.custom_font, 22), fg="white", bg="#8B5C2B", bd=0,
-                         command=lambda: self.show_grid_menu(1))
-        btn1_window = canvas.create_window(270, 350, window=btn1)
-        # 2 Players Button
-        btn2 = tk.Button(self.root, image=self.button_img, text="2 Players", compound="center",
-                         font=(self.custom_font, 22), fg="white", bg="#8B5C2B", bd=0,
-                         command=lambda: self.show_grid_menu(2))
-        btn2_window = canvas.create_window(270, 430, window=btn2)
+        self.canvas = tk.Canvas(self.root, width=540, height=872, bg="#4E2508", highlightthickness=0)
+        self.canvas.pack(fill="both", expand=True)
 
-    def show_grid_menu(self, num_players):
-        self.num_players = num_players
-        self.clear()
-        canvas = tk.Canvas(self.root, width=540, height=800, highlightthickness=0)
-        canvas.pack(fill="both", expand=True)
-        canvas.create_image(0, 0, anchor="nw", image=self.bg_tk)
-        canvas.create_text(270, 120, text="CHOOSE A GRID", font=(self.custom_font, 38), fill="#E5B97A")
-        # Grid buttons
-        btn3 = tk.Button(self.root, image=self.button_img, text="3 X 3", compound="center",
-                         font=(self.custom_font, 22), fg="white", bg="#8B5C2B", bd=0,
-                         command=lambda: self.start_game(3))
-        btn5 = tk.Button(self.root, image=self.button_img, text="5 X 5", compound="center",
-                         font=(self.custom_font, 22), fg="white", bg="#8B5C2B", bd=0,
-                         command=lambda: self.start_game(5))
-        btn7 = tk.Button(self.root, image=self.button_img, text="7 X 7", compound="center",
-                         font=(self.custom_font, 22), fg="white", bg="#8B5C2B", bd=0,
-                         command=lambda: self.start_game(7))
-        canvas.create_window(140, 300, window=btn3)
-        canvas.create_window(270, 400, window=btn5)
-        canvas.create_window(400, 500, window=btn7)
+        banner_img_path = os.path.join(ASSETS, "main_menu.png")
+        banner_img = Image.open(banner_img_path).resize((350, 350))
+        self.banner_img = ImageTk.PhotoImage(banner_img)
+        self.canvas.create_image(270, 230, image=self.banner_img)
 
-    def start_game(self, grid_size):
-        self.grid_size = grid_size
-        self.clear()
-        self.board = [[None for _ in range(grid_size)] for _ in range(grid_size)]
-        self.turn = "X"
-        self.moves = 0
-        self.cells = [[None for _ in range(grid_size)] for _ in range(grid_size)]
-        self.game_canvas = tk.Canvas(self.root, width=540, height=800, highlightthickness=0)
-        self.game_canvas.pack(fill="both", expand=True)
-        self.game_canvas.create_image(0, 0, anchor="nw", image=self.bg_tk)
-        # Title
-        self.turn_text = self.game_canvas.create_text(270, 60, text="Player 1 to move",
-                                                     font=(self.custom_font, 28), fill="white")
-        # Draw grid
-        self.draw_grid()
-        # Bind click
-        self.game_canvas.bind("<Button-1>", self.on_click)
-        # Message
-        self.msg_text = self.game_canvas.create_text(270, 720, text=f"PLACE {3 if grid_size==3 else 4} IN A ROW!",
-                                                     font=(self.custom_font, 22), fill="white")
+        self.btn_1p_img = ImageTk.PhotoImage(Image.open(os.path.join(ASSETS, "1player.png")).resize((250, 45)))
+        self.btn_2p_img = ImageTk.PhotoImage(Image.open(os.path.join(ASSETS, "2player.png")).resize((250, 45)))
 
-    def draw_grid(self):
-        size = self.grid_size
-        cell = 480 // size
-        offset_x = (540 - 480) // 2
-        offset_y = 120
-        for i in range(size + 1):
-            x = offset_x + i * cell
-            self.game_canvas.create_line(x, offset_y, x, offset_y + cell * size, width=6, fill="#7b4a14")
-            y = offset_y + i * cell
-            self.game_canvas.create_line(offset_x, y, offset_x + cell * size, y, width=6, fill="#7b4a14")
-        self.cell_size = cell
-        self.offset_x = offset_x
-        self.offset_y = offset_y
+        btn_1p = tk.Button(self.root, image=self.btn_1p_img, bd=0, highlightthickness=0,
+                           command=lambda: self.start_game(vs_computer=True), cursor="hand2",
+                           bg="#4E2508", activebackground="#4E2508")
+        btn_2p = tk.Button(self.root, image=self.btn_2p_img, bd=0, highlightthickness=0,
+                           command=lambda: self.start_game(vs_computer=False), cursor="hand2",
+                           bg="#4E2508", activebackground="#4E2508")
 
-    def on_click(self, event):
-        x, y = event.x, event.y
-        row = (y - self.offset_y) // self.cell_size
-        col = (x - self.offset_x) // self.cell_size
-        if 0 <= row < self.grid_size and 0 <= col < self.grid_size:
-            if self.board[row][col] is None:
-                self.place_piece(row, col)
+        # Updated button placement: shifted up and closer
+        self.canvas.create_window(270, 500, window=btn_1p, width=300, height=56)
+        self.canvas.create_window(270, 565, window=btn_2p, width=300, height=56)
 
-    def place_piece(self, row, col):
-        x = self.offset_x + col * self.cell_size + self.cell_size // 2
-        y = self.offset_y + row * self.cell_size + self.cell_size // 2
-        img = self.x_img if self.turn == "X" else self.o_img
-        self.cells[row][col] = self.game_canvas.create_image(x, y, image=img)
-        self.board[row][col] = self.turn
-        self.moves += 1
-        if self.check_winner(row, col):
-            self.show_winner()
-        elif self.moves == self.grid_size ** 2:
-            self.show_draw()
+
+    def start_game(self, vs_computer=False):
+        for widget in self.root.winfo_children():
+            widget.destroy()
+
+        self.vs_computer = vs_computer
+        self.game_over = False
+        self.current_player = "X"
+        self.board = [[None]*3 for _ in range(3)]
+        self.cells = [[None]*3 for _ in range(3)]
+
+        self.canvas = tk.Canvas(self.root, width=540, height=872, bg="#8B5E3C", highlightthickness=0)
+        self.canvas.pack(fill="both", expand=True)
+
+        padding_top = 150
+        padding_left = 120
+        cell_size = 100
+
+        for i in range(4):
+            x = padding_left + i * cell_size
+            self.canvas.create_line(x, padding_top, x, padding_top + 3 * cell_size, width=4, fill="#523A1F")
+            y = padding_top + i * cell_size
+            self.canvas.create_line(padding_left, y, padding_left + 3 * cell_size, y, width=4, fill="#523A1F")
+
+        self.status_text = self.canvas.create_text(270, 100, text="Player X's turn", fill="white",
+                                                   font=("Arial Black", 24))
+
+        self.x_img = ImageTk.PhotoImage(Image.open(os.path.join(ASSETS, "x.png")).resize((92, 92)))
+        self.o_img = ImageTk.PhotoImage(Image.open(os.path.join(ASSETS, "o.png")).resize((92, 92)))
+
+        self.canvas.bind("<Button-1>", self.handle_click)
+
+        # Restart button
+        restart_btn = tk.Button(self.root, text="Restart", font=("Arial", 16, "bold"),
+                                command=lambda: self.start_game(vs_computer=self.vs_computer),
+                                bg="#F4E2D8", fg="#4B2E1A", cursor="hand2")
+        self.canvas.create_window(270, 800, window=restart_btn, width=120, height=40)
+
+        # Play Again button image preload
+        self.play_again_img = ImageTk.PhotoImage(
+            Image.open(os.path.join(ASSETS, "playagain.png")).resize((200, 50))
+        )
+        self.play_again_button = None  # placeholder
+
+    def handle_click(self, event):
+        if self.game_over:
+            return
+
+        padding_top = 150
+        padding_left = 120
+        cell_size = 100
+
+        x_click = event.x
+        y_click = event.y
+
+        col = (x_click - padding_left) // cell_size
+        row = (y_click - padding_top) // cell_size
+
+        if 0 <= row < 3 and 0 <= col < 3 and self.board[row][col] is None:
+            self.make_move(row, col, self.current_player)
+
+            if self.check_winner(self.current_player):
+                self.canvas.itemconfig(self.status_text, text=f"Player {self.current_player} wins!")
+                self.game_over = True
+                self.show_play_again()
+                return
+            elif self.check_draw():
+                self.canvas.itemconfig(self.status_text, text="It's a Draw!")
+                self.game_over = True
+                self.show_play_again()
+                return
+
+            if self.vs_computer:
+                self.current_player = "O"
+                self.canvas.itemconfig(self.status_text, text="Computer's turn...")
+                self.root.after(500, self.computer_move)
+            else:
+                self.current_player = "O" if self.current_player == "X" else "X"
+                self.canvas.itemconfig(self.status_text, text=f"Player {self.current_player}'s turn")
+
+    def make_move(self, row, col, player):
+        self.board[row][col] = player
+        x = 120 + col * 100 + 50
+        y = 150 + row * 100 + 50
+        img = self.x_img if player == "X" else self.o_img
+        self.cells[row][col] = self.canvas.create_image(x, y, image=img)
+
+    def computer_move(self):
+        if self.game_over:
+            return
+
+        empty = [(r, c) for r in range(3) for c in range(3) if self.board[r][c] is None]
+        if not empty:
+            return
+
+        row, col = random.choice(empty)
+        self.make_move(row, col, "O")
+
+        if self.check_winner("O"):
+            self.canvas.itemconfig(self.status_text, text="Computer wins!")
+            self.game_over = True
+            self.show_play_again()
+        elif self.check_draw():
+            self.canvas.itemconfig(self.status_text, text="It's a Draw!")
+            self.game_over = True
+            self.show_play_again()
         else:
-            self.turn = "O" if self.turn == "X" else "X"
-            player_num = 1 if self.turn == "X" else 2
-            self.game_canvas.itemconfig(self.turn_text, text=f"Player {player_num} to move")
+            self.current_player = "X"
+            self.canvas.itemconfig(self.status_text, text="Player X's turn")
+    def show_play_again(self):
+        # Defensive check: ensure image is loaded
+        if not hasattr(self, 'play_again_img'):
+            self.play_again_img = ImageTk.PhotoImage(
+                Image.open(os.path.join(ASSETS, "playagain.png")).resize((200, 50))
+            )
 
-    def check_winner(self, row, col):
-        n = self.grid_size
-        win_len = 3 if n == 3 else 4
-        directions = [(1,0), (0,1), (1,1), (1,-1)]
-        for dx, dy in directions:
-            count = 1
-            for dir in [1, -1]:
-                for i in range(1, win_len):
-                    r = row + dx * i * dir
-                    c = col + dy * i * dir
-                    if 0 <= r < n and 0 <= c < n and self.board[r][c] == self.turn:
-                        count += 1
-                    else:
-                        break
-            if count >= win_len:
+        # Remove old button if it exists
+        if hasattr(self, 'play_again_button') and self.play_again_button:
+            self.play_again_button.destroy()
+
+        # Create and place new button (on top of canvas)
+        self.play_again_button = tk.Button(self.root, image=self.play_again_img, bd=0, highlightthickness=0,
+                                           command=lambda: self.start_game(vs_computer=self.vs_computer),
+                                           bg="#8B5E3C", activebackground="#A46D2C", cursor="hand2")
+        self.play_again_button.place(x=170, y=820)  # More reliable than create_window
+
+
+    def check_winner(self, player):
+        b = self.board
+        for i in range(3):
+            if b[i][0] == b[i][1] == b[i][2] == player or b[0][i] == b[1][i] == b[2][i] == player:
                 return True
+        if b[0][0] == b[1][1] == b[2][2] == player or b[0][2] == b[1][1] == b[2][0] == player:
+            return True
         return False
 
-    def show_winner(self):
-        self.game_canvas.unbind("<Button-1>")
-        self.popup("PLAYER 1 WINS!!!" if self.turn == "X" else "PLAYER 2 WINS!!!")
+    def check_draw(self):
+        return all(cell is not None for row in self.board for cell in row)
 
-    def show_draw(self):
-        self.game_canvas.unbind("<Button-1>")
-        self.popup("DRAW!!!")
 
-    def popup(self, message):
-        # Popup background
-        popup = tk.Toplevel(self.root)
-        popup.geometry("400x250+600+300")
-        popup.overrideredirect(True)
-        popup.attributes("-topmost", True)
-        canvas = tk.Canvas(popup, width=400, height=250, highlightthickness=0)
-        canvas.pack()
-        # Wood background
-        bg = Image.open(ASSETS + "button.png").resize((400, 250))
-        bg_tk = ImageTk.PhotoImage(bg)
-        canvas.create_image(0, 0, anchor="nw", image=bg_tk)
-        # Message
-        canvas.create_text(200, 60, text=message, font=(self.custom_font, 28), fill="white")
-        # Play Again button
-        btn = tk.Button(popup, image=self.button_img, text="PLAY AGAIN", compound="center",
-                        font=(self.custom_font, 22), fg="white", bg="#8B5C2B", bd=0,
-                        command=lambda: [popup.destroy(), self.show_main_menu()])
-        canvas.create_window(200, 180, window=btn)
-        # Keep a reference to avoid garbage collection
-        popup.bg_tk = bg_tk
-
-if __name__ == "__main__":  # <-- FIXED
+if __name__ == "__main__":
     root = tk.Tk()
     app = TicTacToeApp(root)
     root.mainloop()
